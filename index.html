@@ -1,1 +1,69 @@
+let out = document.getElementById('out');
+let status = document.getElementById('status');
+out.innerHTML = '';
+let urls = []; // تم إزالة كلمة let من الداخل لضمان تعريفها بشكل صحيح إذا كانت عامة
+status.innerText = 'جاري الضغط ' + files.length + '...';
+
+for (let f of files) {
+    let img = await loadImg(f);
+    let c = document.createElement('canvas');
+    let ctx = c.getContext('2d');
+    
+    let W = 900;
+    let H = (img.height / img.width) * W;
+    
+    c.width = W;
+    c.height = H + (activated ? 0 : 35);
+    
+    ctx.drawImage(img, 0, 0, W, H);
+    
+    // إضافة العلامة المائية السوداء في الأسفل إذا لم يكن مفعلاً
+    if (!activated) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, H, W, 35);
+        ctx.fillStyle = '#f5c518';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('للطلب ' + phone, W / 2, H + 22);
+    }
+    
+    let data = c.toDataURL('image/jpeg', 0.65);
+    urls.push({ data, name: name + '-' + Date.now() + '.jpg' });
+    
+    // 🔥 تصحيح الخطأ هنا: تحويل النص إلى Template Literal باستخدام علامات `` بدلاً من السلسلة العادية
+    out.innerHTML += `
+        <div style="display:inline-block; margin: 10px; text-align: center;">
+            <img src="${data}" style="max-width:200px; display:block; margin-bottom:5px;">
+            <textarea class="desc" style="width:200px; height:60px;">${name} فاخر - جودة عالية - توصيل لكل غزة. للطلب واتساب ${phone}</textarea>
+        </div>
+    `;
+}
+
+status.innerText = '✅ خلص الضغط! ' + urls.length + ' صورة';
+document.getElementById('dlAll').style.display = 'block';
+
+function loadImg(f) {
+    return new Promise(r => {
+        let i = new Image();
+        i.onload = () => {
+            URL.revokeObjectURL(i.src); // تحسين للذاكرة: تنظيف الرابط المؤقت بعد التحميل
+            r(i);
+        };
+        i.src = URL.createObjectURL(f);
+    });
+}
+
+function downloadAll() {
+    urls.forEach((u, i) => {
+        // تحسين: إضافة تأخير زمني بسيط (Delay) لتجنب حظر المتصفح للتحميل المتعدد المتزامن
+        setTimeout(() => {
+            let a = document.createElement('a');
+            a.href = u.data;
+            a.download = u.name;
+            document.body.appendChild(a); // بعض المتصفحات تتطلب وجود العنصر في DOM ليتم التحميل
+            a.click();
+            a.remove();
+        }, i * 200); 
+    });
+}
 
